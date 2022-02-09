@@ -1,6 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TextInput, Alert } from 'react-native';
 import { Button } from 'react-native-elements';
+import { RefreshControl } from 'react-native-web';
 
 const greenColor = '#35CE8D'
 
@@ -10,6 +11,10 @@ export default function App() {
         username:"",
         password:""
     };
+    let state = {
+      user: "Lalala",
+      password: "Password"
+    }
 
     let call = async function() {
         try {
@@ -34,12 +39,15 @@ export default function App() {
 
   return (
     <View style={styles.container}>
+      <StatusBar style={styles.statusBar}
+      backgroundColor={greenColor}/>
       <TextInput
           style={styles.textContainer}
-          placeholder={"Usuario"}
+          placeholder={state.user}
           maxLength={15}
           underlineColorAndroid="transparent"
-          onChangeText={text => user.username=text}/>
+          onChangeText={text => user.username=text}
+          />
       <TextInput
           style={styles.textContainer}
           placeholder={"Contraseña"}
@@ -47,7 +55,6 @@ export default function App() {
           secureTextEntry={true}
           underlineColorAndroid="transparent"
           onChangeText={text => user.password=text}/>
-      <StatusBar style={styles.statusBar}/>
         <Button
             buttonStyle={styles.button}
             titleStyle={styles.titleStyle}
