@@ -33,15 +33,24 @@ export default function App() {
   return (
     <View style={styles.container}>
       <TextInput
-          style={styles.text}
+          style={styles.textContainer}
           placeholder={"Usuario"}
-          onChangeText={text => user.username=text} />
+          maxLength={15}
+          underlineColorAndroid="transparent"
+          onChangeText={text => user.username=text}/>
       <TextInput
-          style={styles.text}
+          style={styles.textContainer}
           placeholder={"Contraseña"}
-          onChangeText={text => user.password=text} />
-      <StatusBar style="auto" />
-      <Button titleStyle={styles.textButton} title="LOG IN" onPress={call}></Button>
+          maxLength={20}
+          secureTextEntry={true}
+          underlineColorAndroid="transparent"
+          onChangeText={text => user.password=text}/>
+      <StatusBar style={styles.button}/>
+        <Button
+            buttonStyle={styles.button}
+            titleStyle={styles.titleStyle}
+            title="Ingresar"
+            onPress={call}/>
     </View>
   );
 }
@@ -49,15 +58,31 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 40,
+    backgroundColor: '#ecf0f1',
   },
-  text: {
-    fontSize: 25,
-    marginBottom: 30
+  textContainer: {
+    alignItems: 'center',
+    textAlign: 'center',
+    fontSize: 23,
+    height: 40,
+    width: "50%",
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor:'#35CE8D',
+    borderRadius: 20
   },
-  textButton: {
-    fontSize: 25
+  titleStyle: {
+    fontSize: 23,
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center'
+  },
+  button:{
+    backgroundColor: '#35CE8D',
+    borderRadius: 20,
+    width: 200,
   }
 });
