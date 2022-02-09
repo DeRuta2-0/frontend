@@ -12,7 +12,7 @@ export default function App() {
         password:""
     };
     let state = {
-      user: "Lalala",
+      user: "Username",
       password: "Password"
     }
 
