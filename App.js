@@ -1,16 +1,58 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Alert } from 'react-native';
 import { Button } from 'react-native-elements';
 
 const greenColor = '#35CE8D'
 
 export default function App() {
+
+    let user = {
+        username:"",
+        password:""
+    };
+
+    let call = async function() {
+        try {
+            await fetch(
+                'http://192.168.0.251:8080/login', {
+                    method: 'post',
+                    mode: 'no-cors',
+                    headers: {
+                        'Accept' : 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        username: user.username,
+                        password: user.password
+                    })
+                }
+            )
+        } catch (e) {
+            console.log(e);
+        }
+    };
+
   return (
-    <View style={styles.container} >
-      <StatusBar style={styles.statusBar} backgroundColor={greenColor} />
-      <TextInput style={styles.textContainer} placeholder={"Usuario"} maxLength={15} underlineColorAndroid="transparent"></TextInput>
-      <TextInput style={styles.textContainer} placeholder={"Contraseña"} maxLength={20} secureTextEntry={true} underlineColorAndroid="transparent"></TextInput>
-      <Button buttonStyle={styles.button} titleStyle={styles.titleStyle} title="Ingresar"></Button>
+    <View style={styles.container}>
+      <TextInput
+          style={styles.textContainer}
+          placeholder={"Usuario"}
+          maxLength={15}
+          underlineColorAndroid="transparent"
+          onChangeText={text => user.username=text}/>
+      <TextInput
+          style={styles.textContainer}
+          placeholder={"Contraseña"}
+          maxLength={20}
+          secureTextEntry={true}
+          underlineColorAndroid="transparent"
+          onChangeText={text => user.password=text}/>
+      <StatusBar style={styles.statusBar}/>
+        <Button
+            buttonStyle={styles.button}
+            titleStyle={styles.titleStyle}
+            title="Ingresar"
+            onPress={call}/>
     </View>
   );
 }
@@ -38,8 +80,7 @@ const styles = StyleSheet.create({
     fontSize: 23,
     textAlign: 'center',
     alignItems: 'center',
-    justifyContent: 'center',
-    textAlign:'center'
+    justifyContent: 'center'
   },
   button:{
     backgroundColor: greenColor,
