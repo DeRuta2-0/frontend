@@ -2,12 +2,14 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TextInput } from 'react-native';
 import { Button } from 'react-native-elements';
 
+const greenColor = '#35CE8D'
+
 export default function App() {
   return (
-    <View style={styles.container}>
+    <View style={styles.container} >
+      <StatusBar style={styles.statusBar} backgroundColor={greenColor} />
       <TextInput style={styles.textContainer} placeholder={"Usuario"} maxLength={15} underlineColorAndroid="transparent"></TextInput>
       <TextInput style={styles.textContainer} placeholder={"Contraseña"} maxLength={20} secureTextEntry={true} underlineColorAndroid="transparent"></TextInput>
-      <StatusBar style={styles.button} />
       <Button buttonStyle={styles.button} titleStyle={styles.titleStyle} title="Ingresar"></Button>
     </View>
   );
@@ -29,7 +31,7 @@ const styles = StyleSheet.create({
     width: "50%",
     marginBottom: 30,
     borderWidth: 1,
-    borderColor:'#35CE8D',
+    borderColor: greenColor,
     borderRadius: 20
   },
   titleStyle: {
@@ -40,8 +42,11 @@ const styles = StyleSheet.create({
     textAlign:'center'
   },
   button:{
-    backgroundColor: '#35CE8D',
+    backgroundColor: greenColor,
     borderRadius: 20,
     width: 200,
+  },
+  statusbar:{
+    backgroundColor: greenColor
   }
 });
