@@ -5,8 +5,8 @@ import { Button } from 'react-native-elements';
 export default function App() {
   return (
     <View style={styles.container}>
-      <TextInput style={styles.text} placeholder={"Usuario"}></TextInput>
-      <TextInput style={styles.text} placeholder={"Contraseña"}></TextInput>
+      <TextInput style={styles.text} placeholder={"Usuario"} maxLength={15} textAlign='center'></TextInput>
+      <TextInput secureTextEntry={true} style={styles.text} placeholder={"Contraseña"} maxLength={20} textAlign='center'></TextInput>
       <StatusBar style="auto" />
       <Button titleStyle={styles.textButton} title="LOG IN"></Button>
     </View>
@@ -16,11 +16,13 @@ export default function App() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#fff',
     alignItems: 'center',
     justifyContent: 'center',
+    paddingTop: 40,
+    backgroundColor: '#ecf0f1',
   },
   text: {
+    alignItems: 'center',
     fontSize: 25,
     marginBottom: 30
   },
