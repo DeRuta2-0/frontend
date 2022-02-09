@@ -5,10 +5,10 @@ import { Button } from 'react-native-elements';
 export default function App() {
   return (
     <View style={styles.container}>
-      <TextInput style={styles.text} placeholder={"Usuario"} maxLength={15} textAlign='center'></TextInput>
-      <TextInput secureTextEntry={true} style={styles.text} placeholder={"Contraseña"} maxLength={20} textAlign='center'></TextInput>
-      <StatusBar style="auto" />
-      <Button titleStyle={styles.textButton} title="LOG IN"></Button>
+      <TextInput style={styles.textContainer} placeholder={"Usuario"} maxLength={15} underlineColorAndroid="transparent"></TextInput>
+      <TextInput style={styles.textContainer} placeholder={"Contraseña"} maxLength={20} secureTextEntry={true} underlineColorAndroid="transparent"></TextInput>
+      <StatusBar style={styles.button} />
+      <Button buttonStyle={styles.button} titleStyle={styles.titleStyle} title="Ingresar"></Button>
     </View>
   );
 }
@@ -21,12 +21,27 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     backgroundColor: '#ecf0f1',
   },
-  text: {
+  textContainer: {
     alignItems: 'center',
-    fontSize: 25,
-    marginBottom: 30
+    textAlign: 'center',
+    fontSize: 23,
+    height: 40,
+    width: "50%",
+    marginBottom: 30,
+    borderWidth: 1,
+    borderColor:'#35CE8D',
+    borderRadius: 20
   },
-  textButton: {
-    fontSize: 25
+  titleStyle: {
+    fontSize: 23,
+    textAlign: 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
+    textAlign:'center'
+  },
+  button:{
+    backgroundColor: '#35CE8D',
+    borderRadius: 20,
+    width: 200,
   }
 });
