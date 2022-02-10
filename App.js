@@ -64,7 +64,8 @@ function Login({ navigation }){
             titleStyle={styles.titleStyle}
             title="Ingresar"
             onPress={() => navigation.navigate('HomeScreen')}/>
-    </View>)
+    </View>
+  );
 }
 
 function HomeScreen({ navigation }) {
