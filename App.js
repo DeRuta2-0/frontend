@@ -2,43 +2,47 @@ import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, TextInput, Alert } from 'react-native';
 import { Button } from 'react-native-elements';
 import { RefreshControl } from 'react-native-web';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import * as React from 'react';
 
 const greenColor = '#35CE8D'
 
-export default function App() {
+let user = {
+  username:"",
+  password:""
+};
+let state = {
+user: "Usuario",
+password: "Contraseña"
+}
+let call2 = async function(){
+    return true
+}
+let call = async function() {
+  try {
+      await fetch(
+          'http://192.168.0.251:8080/login', {
+              method: 'post',
+              mode: 'no-cors',
+              headers: {
+                  'Accept' : 'application/json',
+                  'Content-Type': 'application/json'
+              },
+              body: JSON.stringify({
+                  username: user.username,
+                  password: user.password
+              })
+          }
+      )
+  } catch (e) {
+      console.log(e);
+  }
+};
 
-    let user = {
-        username:"",
-        password:""
-    };
-    let state = {
-      user: "Usuario",
-      password: "Contraseña"
-    }
 
-    let call = async function() {
-        try {
-            await fetch(
-                'http://192.168.0.251:8080/login', {
-                    method: 'post',
-                    mode: 'no-cors',
-                    headers: {
-                        'Accept' : 'application/json',
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        username: user.username,
-                        password: user.password
-                    })
-                }
-            )
-        } catch (e) {
-            console.log(e);
-        }
-    };
-
-  return (
-    <View style={styles.container}>
+function Login({ navigation }){
+  return(<View style={styles.container}>
       <StatusBar style={styles.statusBar}
       backgroundColor={greenColor}/>
       <TextInput
@@ -59,8 +63,30 @@ export default function App() {
             buttonStyle={styles.button}
             titleStyle={styles.titleStyle}
             title="Ingresar"
-            onPress={call}/>
+            onPress={() => navigation.navigate('HomeScreen')}/>
+    </View>)
+}
+
+function HomeScreen({ navigation }) {
+  const username = user.username
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+      <Text>Logueado correctamente</Text>
+      <Text>Value:{username} </Text>
     </View>
+  );
+}
+
+const Stack = createNativeStackNavigator();
+export default function App() {
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator initialRouteName="Login">
+      <Stack.Screen name="Login" component={Login} />
+      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
 
