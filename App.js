@@ -12,8 +12,8 @@ export default function App() {
         password:""
     };
     let state = {
-      user: "Username",
-      password: "Password"
+      user: "Usuario",
+      password: "Contraseña"
     }
 
     let call = async function() {
