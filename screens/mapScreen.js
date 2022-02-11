@@ -1,4 +1,4 @@
-import {Dimensions, StyleSheet, View, Image, Alert} from "react-native";
+import {Dimensions, StyleSheet, View, Image, Alert, Platform, StatusBar} from "react-native";
 import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
 import * as React from "react";
 import {createRef, useRef, useState} from "react";
@@ -65,11 +65,9 @@ export class MapScreen extends React.Component {
 const styles = StyleSheet.create({
     mapStyle: {
         width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height,
+        height: Dimensions.get('window').height + 35
     }
 });
-
-const height = Dimensions.get('window').height;
 
 const mapStyle = [
     {
