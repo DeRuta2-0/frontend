@@ -1,10 +1,12 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, Alert } from 'react-native';
+import { StyleSheet, Text, View, TextInput, Alert, Dimensions } from 'react-native';
 import { Button } from 'react-native-elements';
 import { RefreshControl } from 'react-native-web';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import * as React from 'react';
+import MapView, { PROVIDER_GOOGLE } from 'react-native-maps';
+import { mapStyle } from './mapStyle';
 
 const greenColor = '#35CE8D'
 
@@ -63,9 +65,28 @@ function Login({ navigation }){
             buttonStyle={styles.button}
             titleStyle={styles.titleStyle}
             title="Ingresar"
-            onPress={() => navigation.navigate('HomeScreen')}/>
+            onPress={() => navigation.navigate('MapScreen')}/>
     </View>
   );
+}
+
+function MapScreen({ navigation }) {
+    return (
+        <View style={styles.container}>
+            <MapView
+                customMapStyle={mapStyle}
+                provider={PROVIDER_GOOGLE}
+                style={styles.mapStyle}
+                initialRegion={{
+                    latitude: 41.3995345,
+                    longitude: 2.1909796,
+                    latitudeDelta: 0.003,
+                    longitudeDelta: 0.003,
+                }}
+                mapType="standard"
+            ></MapView>
+        </View>
+    );
 }
 
 function HomeScreen({ navigation }) {
@@ -85,7 +106,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator initialRouteName="Login">
       <Stack.Screen name="Login" component={Login} />
-      <Stack.Screen name="HomeScreen" component={HomeScreen} />
+      <Stack.Screen name="MapScreen" component={MapScreen} />
       </Stack.Navigator>
     </NavigationContainer>
   );
@@ -123,5 +144,9 @@ const styles = StyleSheet.create({
   },
   statusbar:{
     backgroundColor: greenColor
+  },
+  mapStyle: {
+    width: Dimensions.get('window').width,
+    height: Dimensions.get('window').height,
   }
 });
