@@ -1,4 +1,34 @@
-export const mapStyle = [
+import {Dimensions, StyleSheet, View} from "react-native";
+import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
+import * as React from "react";
+
+export function MapScreen({ navigation }) {
+    return (
+        <View style={styles.container}>
+            <MapView
+                customMapStyle={mapStyle}
+                provider={PROVIDER_GOOGLE}
+                style={styles.mapStyle}
+                initialRegion={{
+                    latitude: 41.3995345,
+                    longitude: 2.1909796,
+                    latitudeDelta: 0.003,
+                    longitudeDelta: 0.003,
+                }}
+                mapType="standard"
+            ></MapView>
+        </View>
+    );
+}
+
+const styles = StyleSheet.create({
+    mapStyle: {
+        width: Dimensions.get('window').width,
+        height: Dimensions.get('window').height,
+    }
+});
+
+const mapStyle = [
     {
         featureType: 'water',
         elementType: 'geometry',
