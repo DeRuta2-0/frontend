@@ -1,31 +1,19 @@
 import {Alert, StyleSheet, TextInput, View} from "react-native";
 import {StatusBar} from "expo-status-bar";
 import {Button} from "react-native-elements";
-import {useEffect, useRef, useState} from "react";
+import {useState} from "react";
 import {serverIp, usingServer} from "../localProperties";
-import { useIsFocused } from "@react-navigation/native";
 
-export default function LoginScreen({navigation}) {
+export default function RegisterScreen({navigation}) {
 
     const [username, setUsername] = useState('');
     const [password, setPassword] = useState('');
-    const isFocused = useIsFocused();
-    const usernameInput = useRef();
-    const passwordInput = useRef();
 
-    useEffect(() => {
-        if (isFocused) {
-            usernameInput.current.clear();
-            passwordInput.current.clear();
-        }
-    }, [isFocused])
-
-    const login = async () => {
+    const register = async () => {
         try {
             if (usingServer) {
-                console.log("ip: " + serverIp);
                 await fetch(
-                    'http://'.concat(serverIp).concat(':8080/login'), {
+                    'http://'.concat(serverIp).concat(':8080/user'), {
                         method: 'post',
                         mode: 'no-cors',
                         headers: {
@@ -39,13 +27,13 @@ export default function LoginScreen({navigation}) {
                     }
                 ).then(function(response) {
                     if (response.ok) {
-                        navigation.navigate('MapScreen');
+                        navigation.navigate('LoginScreen');
                     } else {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            
-                        Alert.alert("Login incorrecto");
+                        Alert.alert("Registro incorrecto");
                     }
                 });
             } else {
-                navigation.navigate('MapScreen');
+                navigation.navigate('LoginScreen');
             }
         } catch (e) {
             console.log(e);
@@ -56,7 +44,6 @@ export default function LoginScreen({navigation}) {
             <StatusBar style={styles.statusBar}
                        backgroundColor={greenColor}/>
             <TextInput
-                ref={usernameInput}
                 style={styles.textContainer}
                 placeholder={"Usuario"}
                 maxLength={15}
@@ -64,7 +51,6 @@ export default function LoginScreen({navigation}) {
                 onChangeText={text => setUsername(text)}
             />
             <TextInput
-                ref={passwordInput}
                 style={styles.textContainer}
                 placeholder={"Contraseña"}
                 maxLength={20}
@@ -73,15 +59,10 @@ export default function LoginScreen({navigation}) {
                 onChangeText={text => setPassword(text)}
             />
             <Button
-                buttonStyle={styles.loginButton}
-                titleStyle={styles.titleStyle}
-                title="Ingresar"
-                onPress={() => login()}/>
-            <Button
                 buttonStyle={styles.registerButton}
                 titleStyle={styles.titleStyle}
                 title="Registrarse"
-                onPress={() => navigation.navigate('RegisterScreen')}/>
+                onPress={() => register()}/>
         </View>
     );
 }
@@ -105,7 +86,7 @@ const styles = StyleSheet.create({
         width: "50%",
         marginBottom: 30,
         borderWidth: 1,
-        borderColor: greenColor,
+        borderColor: blueColor,
         borderRadius: 20
     },
     titleStyle: {
@@ -114,17 +95,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
-    loginButton:{
-        backgroundColor: greenColor,
-        borderRadius: 20,
-        width: 200,
-        marginBottom: 30,
-    },
     registerButton:{
         backgroundColor: blueColor,
         borderRadius: 20,
         width: 200,
-        marginBottom: 30,
     },
     statusbar:{
         backgroundColor: greenColor

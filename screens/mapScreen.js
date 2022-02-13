@@ -1,41 +1,59 @@
-import {Dimensions, StyleSheet, View, Image, Alert, Platform, StatusBar} from "react-native";
+import {Dimensions, Image, StyleSheet, View} from "react-native";
 import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
 import * as React from "react";
-import {createRef, useRef, useState} from "react";
+import {useEffect, useRef, useState} from "react";
+import {serverIp, usingServer} from "../localProperties";
 
-export class MapScreen extends React.Component {
+export default function MapScreen({navigation}) {
 
-    constructor(props) {
-        super(props);
-        this.map = createRef();
-    }
+    const [pins, setPins] = useState([]);
+    const [region, setRegion] = useState({latitude: 0, longitude: 0, latitudeDelta: 20, longitudeDelta: 20});
 
-    state = {
-        pins: []
-    }
-
-    async componentDidMount() {
-        await fetch(
-            'http://192.168.0.251:8080/user/contacts', {
-                method: 'get',
-                mode: 'no-cors'
-            }
-        )
-        .then(res => res.json())
-        .then(data => {
-            this.setState({ pins: data })
-            this.map.current.animateToRegion({
-                latitude: data[0].coordinates.latitude,
-                longitude: data[0].coordinates.longitude,
+    useEffect(async () => {
+        if (usingServer) {
+            await fetch(
+                'http://'.concat(serverIp).concat(':8080/user/contacts'), {
+                    method: 'get',
+                    mode: 'no-cors'
+                }
+            )
+                .then(res => res.json())
+                .then(data => {
+                    setPins(data);
+                    if (data[0]) {
+                        setRegion({
+                            latitude: data[0].coordinates.latitude,
+                            longitude: data[0].coordinates.longitude,
+                            latitudeDelta: 0.2,
+                            longitudeDelta: 0.2
+                        })
+                    }
+                })
+                .catch(console.error)
+        } else {
+            setPins([
+                {
+                    id: 1,
+                    coordinates: {latitude: -34.6077514, longitude: -58.3852248},
+                    username: 'cdondovich'
+                },
+                {
+                    id: 2,
+                    coordinates: {latitude: -34.611257, longitude: -58.3801285},
+                    username: 'amelian'
+                }
+            ]);
+            setRegion({
+                latitude: -34.6077514,
+                longitude: -58.3852248,
                 latitudeDelta: 0.1,
                 longitudeDelta: 0.1
-            });
-        })
-        .catch(console.error)
-    }
+            })
+        }
+    }, []);
 
-    mapMarkers = () => {
-        return this.state.pins.map((marker) => <MapView.Marker
+    const mapMarkers = () => {
+        return pins.map((marker) => <MapView.Marker
             key={marker.id}
             coordinate={marker.coordinates}
             title={marker.username}
@@ -44,22 +62,21 @@ export class MapScreen extends React.Component {
         </MapView.Marker>)
     }
 
-    render() {
-        return (
-            <View style={styles.container}>
-                <MapView
-                    ref={this.map}
-                    customMapStyle={mapStyle}
-                    provider={PROVIDER_GOOGLE}
-                    style={styles.mapStyle}
-                    loadingEnabled={true}
-                    mapType="standard"
-                >
-                    {this.mapMarkers()}
-                </MapView>
-            </View>
-        )
-    };
+    return (
+        <View style={styles.container}>
+            <MapView
+                customMapStyle={mapStyle}
+                provider={PROVIDER_GOOGLE}
+                style={styles.mapStyle}
+                loadingEnabled={true}
+                mapType="standard"
+                initialRegion={{latitude: 0, longitude: 0, latitudeDelta: 20, longitudeDelta: 20}}
+                region={region}
+            >
+                {mapMarkers()}
+            </MapView>
+        </View>
+    );
 };
 
 const styles = StyleSheet.create({
