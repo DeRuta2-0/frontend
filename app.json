@@ -31,7 +31,8 @@
         "googleMaps": {
           "apiKey": "AIzaSyCzm2Ze6NQ0hI4qmjBpqPyHFhEIAcPPKVo"
         }
-      }
+      },
+      "package": "ar.com.deruta"
     },
     "web": {
       "favicon": "./assets/favicon.png"
