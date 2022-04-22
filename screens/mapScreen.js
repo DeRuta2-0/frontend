@@ -47,7 +47,7 @@ export default function MapScreen({navigation, route}) {
                     id: 1,
                     coordinates: {latitude: -34.6077514, longitude: -58.3852248},
                     username: 'cdondovich',
-                    lastUpdated: Date.now()
+                    pictureLastUpdated: Date.now()
                 },
                 {
                     id: 2,
@@ -73,8 +73,8 @@ export default function MapScreen({navigation, route}) {
         if (marker.username === loggedUser) {
             if (!localPic) {
                 let uri = 'https://cdn.image4.io/deruta/misc/nopic.png';
-                if (marker.lastUpdated) {
-                    uri = 'https://cdn.image4.io/deruta/avatars/' + marker.username + '.png?t=' + marker.lastUpdated;
+                if (marker.pictureLastUpdated) {
+                    uri = 'https://cdn.image4.io/deruta/avatars/' + marker.username + '.png?t=' + marker.pictureLastUpdated;
                 }
                 setLocalPic(uri);
                 setImageUri(uri);
@@ -82,14 +82,24 @@ export default function MapScreen({navigation, route}) {
                 setImageUri(localPic);
             }
         } else {
-            if (marker.lastUpdated) {
-                setImageUri('https://cdn.image4.io/deruta/avatars/' + marker.username + '.png?t=' + marker.lastUpdated);
+            if (marker.pictureLastUpdated) {
+                setImageUri('https://cdn.image4.io/deruta/avatars/' + marker.username + '.png?t=' + marker.pictureLastUpdated);
             } else {
                 setImageUri('https://cdn.image4.io/deruta/misc/nopic.png');
             }
         }
         setSelectedMarker(marker);
         setModalVisible(true);
+    }
+
+    const getMarkerPicture = (marker) => {
+        return (marker.pictureLastUpdated != null) ?
+            <Image source={{uri: 'https://cdn.image4.io/deruta/avatars/' + marker.username + '.png?t=' + marker.pictureLastUpdated}}
+                   style={{height: 40, width: 40, borderRadius: 20, borderColor: '#35CE8D', borderWidth: 2}}/>
+        :
+            <Image source={require('../assets/nopic.png')}
+                   style={{height: 40, width: 40, borderRadius: 20}}/>;
+
     }
 
     const mapMarkers = () => {
@@ -99,7 +109,8 @@ export default function MapScreen({navigation, route}) {
             title={marker.username}
             onCalloutPress={() => {setMarker(marker)}}
         >
-            <Image source={require('../assets/pin3.png')} style={{height: 32, width: 32}}/>
+            {getMarkerPicture(marker)}
+
         </MapView.Marker>)
     }
 
@@ -148,7 +159,7 @@ export default function MapScreen({navigation, route}) {
                                 'Authorization': 'Basic ' + encode(image4ioApiKey + ':' + image4ioApiSecret)
                             }
                         }
-                    ).then(() => {selectedMarker.lastUpdated = Date.now()});
+                    ).then(() => {selectedMarker.pictureLastUpdated = Date.now()});
                 })
                 .catch((e) => console.log(e))
         }
@@ -242,7 +253,8 @@ const styles = StyleSheet.create({
         backgroundColor: '#ddd',
         borderRadius: 10,
         alignItems: 'center',
-        borderWidth: 3, borderColor: '#bbb'
+        borderWidth: 3,
+        borderColor: '#bbb'
     },
     modalTitle: {
         fontSize: 30,
