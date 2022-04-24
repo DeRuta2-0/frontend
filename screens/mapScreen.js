@@ -1,11 +1,19 @@
-import {Alert, Dimensions, Image, Modal, StyleSheet, View, Text, AppRegistry} from "react-native";
+import {
+    Dimensions,
+    Image,
+    Modal,
+    StyleSheet,
+    View,
+    Text,
+} from "react-native";
 import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
 import * as React from "react";
-import {useEffect, useRef, useState} from "react";
+import {useEffect, useState} from "react";
 import {image4ioApiKey, image4ioApiSecret, serverIp, usingServer} from "../localProperties";
 import {Button} from "react-native-elements";
 import * as ImagePicker from 'expo-image-picker';
 import { encode } from 'js-base64';
+import * as Location from 'expo-location';
 
 export default function MapScreen({navigation, route}) {
 
@@ -18,8 +26,22 @@ export default function MapScreen({navigation, route}) {
     const [localPic, setLocalPic] = useState(null);
     const [galleryPermission, setGalleryPermission] = useState(null);
 
+    const [location, setLocation] = useState(null);
+    const [errorMsg, setErrorMsg] = useState(null);
+
     useEffect(async () => {
         await permissionFunction();
+
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+            setErrorMsg('Permission to access location was denied');
+            return;
+        }
+
+        let location = await Location.getCurrentPositionAsync({});
+        setLocation(location);
+        console.log('Location: ' + location.coords.latitude + '/' + location.coords.longitude);
+
         if (usingServer) {
             await fetch(
                 'http://'.concat(serverIp).concat(':8080/user/contacts'), {
@@ -29,9 +51,10 @@ export default function MapScreen({navigation, route}) {
             )
                 .then(res => res.json())
                 .then(data => {
-                    setPins(data);
                     //TODO sustituir por coordenadas propias
                     if (data[0]) {
+                        data[0].coordinates.latitude = location.coords.latitude;
+                        data[0].coordinates.longitude = location.coords.longitude;
                         setRegion({
                             latitude: data[0].coordinates.latitude,
                             longitude: data[0].coordinates.longitude,
@@ -39,6 +62,7 @@ export default function MapScreen({navigation, route}) {
                             longitudeDelta: 0.2
                         })
                     }
+                    setPins(data);
                 })
                 .catch(console.error)
         } else {
