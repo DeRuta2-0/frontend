@@ -8,7 +8,7 @@ import {
 } from "react-native";
 import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
 import * as React from "react";
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {image4ioApiKey, image4ioApiSecret, serverIp, usingServer} from "../localProperties";
 import {Button} from "react-native-elements";
 import * as ImagePicker from 'expo-image-picker';
@@ -19,27 +19,23 @@ export default function MapScreen({navigation, route}) {
 
     const {loggedUser} = route.params;
     const [pins, setPins] = useState([]);
-    const [region, setRegion] = useState({latitude: 0, longitude: 0, latitudeDelta: 20, longitudeDelta: 20});
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState({});
     const [imageUri, setImageUri] = useState(null);
     const [localPic, setLocalPic] = useState(null);
     const [galleryPermission, setGalleryPermission] = useState(null);
-
-    const [location, setLocation] = useState(null);
-    const [errorMsg, setErrorMsg] = useState(null);
+    const map = useRef(null);
 
     useEffect(async () => {
         await permissionFunction();
 
         let { status } = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
-            setErrorMsg('Permission to access location was denied');
+            console.log('Permission to access location was denied');
             return;
         }
 
         let location = await Location.getCurrentPositionAsync({});
-        setLocation(location);
         console.log('Location: ' + location.coords.latitude + '/' + location.coords.longitude);
 
         if (usingServer) {
@@ -51,16 +47,9 @@ export default function MapScreen({navigation, route}) {
             )
                 .then(res => res.json())
                 .then(data => {
-                    //TODO sustituir por coordenadas propias
                     if (data[0]) {
                         data[0].coordinates.latitude = location.coords.latitude;
                         data[0].coordinates.longitude = location.coords.longitude;
-                        setRegion({
-                            latitude: data[0].coordinates.latitude,
-                            longitude: data[0].coordinates.longitude,
-                            latitudeDelta: 0.2,
-                            longitudeDelta: 0.2
-                        })
                     }
                     setPins(data);
                 })
@@ -69,7 +58,7 @@ export default function MapScreen({navigation, route}) {
             setPins([
                 {
                     id: 1,
-                    coordinates: {latitude: -34.6077514, longitude: -58.3852248},
+                    coordinates: {latitude: location.coords.latitude, longitude: location.coords.longitude},
                     username: 'cdondovich',
                     pictureLastUpdated: Date.now()
                 },
@@ -84,13 +73,14 @@ export default function MapScreen({navigation, route}) {
                     username: 'drojas'
                 }
             ]);
-            setRegion({
-                latitude: -34.6077514,
-                longitude: -58.3852248,
-                latitudeDelta: 0.1,
-                longitudeDelta: 0.1
-            })
         }
+
+        map.current.animateToRegion({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.2,
+            longitudeDelta: 0.2
+        });
     }, []);
 
     const setMarker = (marker) => {
@@ -183,7 +173,32 @@ export default function MapScreen({navigation, route}) {
                                 'Authorization': 'Basic ' + encode(image4ioApiKey + ':' + image4ioApiSecret)
                             }
                         }
-                    ).then(() => {selectedMarker.pictureLastUpdated = Date.now()});
+                    ).then(async () => {
+                        if (usingServer) {
+                            await fetch(
+                                'http://'.concat(serverIp).concat(':8080/user/pictureUpdated'), {
+                                    method: 'post',
+                                    mode: 'no-cors',
+                                    headers: {
+                                        'Accept' : 'application/json',
+                                        'Content-Type': 'application/json'
+                                    },
+                                    body: JSON.stringify({
+                                        timestamp: selectedMarker.pictureLastUpdated
+                                    })
+                                }
+                            )
+                                .then(res => res.json())
+                                .then(data => {
+                                    selectedMarker.pictureLastUpdated = data;
+
+                                })
+                                .then(() => {
+                                    setImageUri('https://cdn.image4.io/deruta/avatars/' + selectedMarker.username + '.png?t=' + selectedMarker.pictureLastUpdated)
+                                })
+                                .catch(console.error)
+                        }
+                    });
                 })
                 .catch((e) => console.log(e))
         }
@@ -250,13 +265,12 @@ export default function MapScreen({navigation, route}) {
                 <View style={{flex:1}}></View>
             </Modal>
             <MapView
+                ref={map}
                 customMapStyle={mapStyle}
                 provider={PROVIDER_GOOGLE}
                 style={styles.mapStyle}
                 loadingEnabled={true}
-                mapType="standard"
-                initialRegion={{latitude: 0, longitude: 0, latitudeDelta: 20, longitudeDelta: 20}}
-                region={region}>
+                mapType="standard">
                 {mapMarkers()}
             </MapView>
         </View>
