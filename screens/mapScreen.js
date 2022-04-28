@@ -5,6 +5,8 @@ import {
     StyleSheet,
     View,
     Text,
+    Animated,
+    Easing
 } from "react-native";
 import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
 import * as React from "react";
@@ -19,25 +21,46 @@ export default function MapScreen({navigation, route}) {
 
     const {loggedUser} = route.params;
     const [pins, setPins] = useState([]);
+    const [placePins, setPlacePins] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState({});
     const [imageUri, setImageUri] = useState(null);
     const [localPic, setLocalPic] = useState(null);
     const [galleryPermission, setGalleryPermission] = useState(null);
+    const [loading, setLoading] = useState(null);
     const map = useRef(null);
 
     useEffect(async () => {
+        setLoading(true);
+
         await permissionFunction();
 
-        let { status } = await Location.requestForegroundPermissionsAsync();
+        let location = await getLocation();
+
+        await getContacts(location);
+
+        await getPlaces();
+
+        setLoading(false);
+
+        map.current.animateToRegion({
+            latitude: location.coords.latitude,
+            longitude: location.coords.longitude,
+            latitudeDelta: 0.2,
+            longitudeDelta: 0.2
+        });
+    }, []);
+
+    async function getLocation() {
+        let {status} = await Location.requestForegroundPermissionsAsync();
         if (status !== 'granted') {
             console.log('Permission to access location was denied');
             return;
         }
+        return await Location.getCurrentPositionAsync({});
+    }
 
-        let location = await Location.getCurrentPositionAsync({});
-        console.log('Location: ' + location.coords.latitude + '/' + location.coords.longitude);
-
+    async function getContacts(location) {
         if (usingServer) {
             await fetch(
                 'http://'.concat(serverIp).concat(':8080/user/contacts'), {
@@ -74,14 +97,31 @@ export default function MapScreen({navigation, route}) {
                 }
             ]);
         }
+    }
 
-        map.current.animateToRegion({
-            latitude: location.coords.latitude,
-            longitude: location.coords.longitude,
-            latitudeDelta: 0.2,
-            longitudeDelta: 0.2
-        });
-    }, []);
+    async function getPlaces() {
+        if (usingServer) {
+            await fetch(
+                'http://'.concat(serverIp).concat(':8080/place'), {
+                    method: 'get',
+                    mode: 'no-cors'
+                }
+            )
+                .then(res => res.json())
+                .then(data => {
+                    setPlacePins(data);
+                })
+                .catch(console.error)
+        } else {
+            setPlacePins([
+                {
+                    id: 1,
+                    coordinates: {latitude: -34.61549, longitude: -58.38592},
+                    name: 'Roots Backpackers Hostel Test'
+                }
+            ]);
+        }
+    }
 
     const setMarker = (marker) => {
         if (marker.username === loggedUser) {
@@ -106,15 +146,32 @@ export default function MapScreen({navigation, route}) {
         setModalVisible(true);
     }
 
+    const setPlaceMarker = (marker) => {
+        if (marker.pictures.length > 0) {
+            setImageUri(marker.pictures[0].link);
+        } else {
+            setImageUri('https://cdn.image4.io/deruta/misc/nopic.png');
+        }
+        setSelectedMarker(marker);
+        setModalVisible(true);
+    }
+
+    const getPlaceMarkerPicture = (marker) => {
+        console.log('Type: ' + marker.type.name);
+        return <Image source={require('../assets/markerHostel.png')}
+                   style={{height: 40, width: 40, borderRadius: 20}}/>;
+
+    };
+
     const getMarkerPicture = (marker) => {
         return (marker.pictureLastUpdated != null) ?
             <Image source={{uri: 'https://cdn.image4.io/deruta/avatars/' + marker.username + '.png?t=' + marker.pictureLastUpdated}}
                    style={{height: 40, width: 40, borderRadius: 20, borderColor: '#35CE8D', borderWidth: 2}}/>
-        :
+            :
             <Image source={require('../assets/nopic.png')}
                    style={{height: 40, width: 40, borderRadius: 20}}/>;
 
-    }
+    };
 
     const mapMarkers = () => {
         return pins.map((marker) => <MapView.Marker
@@ -126,7 +183,19 @@ export default function MapScreen({navigation, route}) {
             {getMarkerPicture(marker)}
 
         </MapView.Marker>)
-    }
+    };
+
+    const mapPlaceMarkers = () => {
+        return placePins.map((marker) => <MapView.Marker
+            key={marker.id}
+            coordinate={marker.coordinates}
+            title={marker.name}
+            onCalloutPress={() => {setPlaceMarker(marker)}}
+        >
+            {getPlaceMarkerPicture(marker)}
+
+        </MapView.Marker>)
+    };
 
     const permissionFunction = async () => {
         const imagePermission = await ImagePicker.getMediaLibraryPermissionsAsync();
@@ -217,7 +286,20 @@ export default function MapScreen({navigation, route}) {
     }
 
     return (
-        <View style={styles.container}>
+        <View>
+            <Modal
+                visible={loading}
+                animationType={"fade"}>
+                <View style={styles.loadingView}>
+                    <Animated.Image
+                        style={styles.reloadImage}
+                        source={require('../assets/camper.png')}></Animated.Image>
+                    <Text style={styles.loadingText}>
+                        CARGANDO...
+                    </Text>
+
+                </View>
+            </Modal>
             <Modal
                 visible={modalVisible}
                 transparent
@@ -234,13 +316,13 @@ export default function MapScreen({navigation, route}) {
                                 source={{uri: imageUri}}
                                 defaultSource={require('../assets/nopic.png')}/>
                         </View>
-                        <View style={{flex:1, paddingTop: 20}}>
+                        <View style={{flex:2, paddingTop: 20, alignContent: "center"}}>
                             <Text
                                 style={styles.modalTitle}>
-                                {selectedMarker.username}
+                                {selectedMarker.username}{selectedMarker.name}
                             </Text>
                         </View>
-                        <View style={{flex:2, padding: 20}}>
+                        <View style={{flex:1, padding: 20}}>
                             <Text
                                 style={styles.modalText}>
                                 {selectedMarker.coordinates ? selectedMarker.coordinates.latitude : ''}
@@ -272,12 +354,42 @@ export default function MapScreen({navigation, route}) {
                 loadingEnabled={true}
                 mapType="standard">
                 {mapMarkers()}
+                {mapPlaceMarkers()}
             </MapView>
         </View>
     );
 };
 
+const spinValue = new Animated.Value(0);
+
+// First set up animation
+Animated.loop(
+    Animated.timing(
+        spinValue,
+        {
+            toValue: 1,
+            duration: 500,
+            easing: Easing.linear,
+            useNativeDriver: true
+        }
+    )
+).start();
+
+const spin = spinValue.interpolate({
+    inputRange: [0, 0.25, 0.5, 0.75, 1],
+    outputRange: ['0deg', '20deg', '0deg', '-20deg', '0deg']
+});
+
 const styles = StyleSheet.create({
+    loadingView: {
+        flex: 1,
+        alignItems: 'center',
+        justifyContent: 'center'
+    },
+    loadingText: {
+        marginTop: 20,
+        fontSize: 35
+    },
     mapStyle: {
         width: Dimensions.get('window').width,
         height: Dimensions.get('window').height + 35
@@ -296,8 +408,8 @@ const styles = StyleSheet.create({
     },
     modalTitle: {
         fontSize: 30,
-        fontWeight: 'bold'
-
+        fontWeight: 'bold',
+        textAlign: 'center'
     },
     modalText: {
         fontSize: 20
@@ -312,6 +424,11 @@ const styles = StyleSheet.create({
         borderRadius: 75,
         borderWidth: 3,
         borderColor: '#35CE8D'
+    },
+    reloadImage: {
+        width: 50,
+        height: 50,
+        transform: [{rotate: spin}]
     }
 });
 
