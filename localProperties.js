@@ -1,4 +1,4 @@
-export const usingServer = false;
+export const usingServer = true;
 export const serverIp = '192.168.0.251';
 
 export const image4ioApiKey = '68S8aaojVb8KTtM5oAp/kA==';

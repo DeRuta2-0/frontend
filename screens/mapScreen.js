@@ -6,7 +6,8 @@ import {
     View,
     Text,
     Animated,
-    Easing
+    Easing,
+    TouchableOpacity
 } from "react-native";
 import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
 import * as React from "react";
@@ -16,6 +17,7 @@ import {Button} from "react-native-elements";
 import * as ImagePicker from 'expo-image-picker';
 import { encode } from 'js-base64';
 import * as Location from 'expo-location';
+import {ImageGallery} from "@georstat/react-native-image-gallery";
 
 export default function MapScreen({navigation, route}) {
 
@@ -23,6 +25,7 @@ export default function MapScreen({navigation, route}) {
     const [pins, setPins] = useState([]);
     const [placePins, setPlacePins] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
+    const [galleryVisible, setGalleryVisible] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState({});
     const [imageUri, setImageUri] = useState(null);
     const [localPic, setLocalPic] = useState(null);
@@ -36,7 +39,7 @@ export default function MapScreen({navigation, route}) {
         await permissionFunction();
 
         let location = await getLocation();
-
+        console.log('Location: ' + location.coords.latitude + '/' + location.coords.longitude);
         await getContacts(location);
 
         await getPlaces();
@@ -46,8 +49,8 @@ export default function MapScreen({navigation, route}) {
         map.current.animateToRegion({
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
-            latitudeDelta: 0.2,
-            longitudeDelta: 0.2
+            latitudeDelta: 0.03,
+            longitudeDelta: 0.03
         });
     }, []);
 
@@ -71,8 +74,7 @@ export default function MapScreen({navigation, route}) {
                 .then(res => res.json())
                 .then(data => {
                     if (data[0]) {
-                        data[0].coordinates.latitude = location.coords.latitude;
-                        data[0].coordinates.longitude = location.coords.longitude;
+                        data[0].coordinates = {latitude: location.coords.latitude, longitude: location.coords.longitude};
                     }
                     setPins(data);
                 })
@@ -157,7 +159,6 @@ export default function MapScreen({navigation, route}) {
     }
 
     const getPlaceMarkerPicture = (marker) => {
-        console.log('Type: ' + marker.type.name);
         return <Image source={require('../assets/markerHostel.png')}
                    style={{height: 40, width: 40, borderRadius: 20}}/>;
 
@@ -171,6 +172,10 @@ export default function MapScreen({navigation, route}) {
             <Image source={require('../assets/nopic.png')}
                    style={{height: 40, width: 40, borderRadius: 20}}/>;
 
+    };
+
+    const mapImages = () => {
+        return selectedMarker.username ? [{id: 1, url: imageUri}] : (selectedMarker.pictures ? selectedMarker.pictures.map((picture) => { return {id: picture.id, url: picture.link}}) : []);
     };
 
     const mapMarkers = () => {
@@ -277,13 +282,41 @@ export default function MapScreen({navigation, route}) {
         return loggedUser === username ? <View style={{flex:1, flexDirection: 'column-reverse'}}>
             <Button
                 buttonStyle={styles.modalButtonStyle}
-                title={"CHANGE PICTURE"}
+                title={"CAMBIAR IMAGEN"}
                 onPress={pickImage}>
             </Button>
         </View>
             :
         <View style={{flex:1, flexDirection: 'column-reverse'}}></View>
     }
+
+    const closeGallery = () => setGalleryVisible(false);
+
+    const renderHeaderComponent = (image, currentIndex) => {
+        return (
+            <View style={{flex:4, backgroundColor: '#00000090'}}>
+                <TouchableOpacity onPress={closeGallery}>
+                    <Image
+                        style={styles.closeButton}
+                        source={require('../assets/close.png')}/>
+                </TouchableOpacity>
+            </View>);
+    };
+
+    const renderCustomImage = (image) => {
+        return (
+            <View style={{flex:1}}>
+                <View style={{flex:1}}></View>
+                <View style={{flex:2, alignItems: 'center', justifyContent: 'center'}}>
+                    <Image
+                        source={{uri: image.url}}
+                        style={styles.galleryImage}
+                    />
+                </View>
+                <View style={{flex:1}}></View>
+            </View>
+        );
+    };
 
     return (
         <View>
@@ -311,10 +344,12 @@ export default function MapScreen({navigation, route}) {
                     <View
                         style={styles.modalStyle}>
                         <View style={{paddingTop: 20}}>
-                            <Image
-                                style={styles.image}
-                                source={{uri: imageUri}}
-                                defaultSource={require('../assets/nopic.png')}/>
+                            <TouchableOpacity onPress={() => setGalleryVisible(true)}>
+                                <Image
+                                    style={styles.image}
+                                    source={{uri: imageUri}}
+                                    defaultSource={require('../assets/nopic.png')}/>
+                            </TouchableOpacity>
                         </View>
                         <View style={{flex:2, paddingTop: 20, alignContent: "center"}}>
                             <Text
@@ -336,7 +371,7 @@ export default function MapScreen({navigation, route}) {
                         <View style={{flex:1, flexDirection: 'column-reverse', paddingBottom: 20}}>
                             <Button
                                 buttonStyle={styles.modalButtonStyle}
-                                title={"CLOSE"}
+                                title={"CERRAR"}
                                 onPress={() => setModalVisible(false)}>
                             </Button>
                         </View>
@@ -346,6 +381,12 @@ export default function MapScreen({navigation, route}) {
                 </View>
                 <View style={{flex:1}}></View>
             </Modal>
+            <ImageGallery
+                close={closeGallery}
+                isOpen={galleryVisible}
+                renderHeaderComponent={renderHeaderComponent}
+                renderCustomImage={renderCustomImage}
+                images={mapImages()}/>
             <MapView
                 ref={map}
                 customMapStyle={mapStyle}
@@ -386,6 +427,10 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         justifyContent: 'center'
     },
+    galleryText: {
+        fontSize: 15,
+        color: '#ffffff'
+    },
     loadingText: {
         marginTop: 20,
         fontSize: 35
@@ -425,6 +470,19 @@ const styles = StyleSheet.create({
         borderWidth: 3,
         borderColor: '#35CE8D'
     },
+    closeButton: {
+        width: 40,
+        height: 40,
+        borderRadius: 75,
+        borderWidth: 3,
+        borderColor: '#000000',
+        marginTop: 10,
+        marginLeft: 10
+    },
+    galleryImage: {
+        width: '90%',
+        height: '90%'
+    },
     reloadImage: {
         width: 50,
         height: 50,
@@ -438,7 +496,7 @@ const mapStyle = [
         elementType: 'geometry',
         stylers: [
             {
-                color: '#e9e9e9',
+                color: '#7ca9f4',
             },
             {
                 lightness: 17,
@@ -450,7 +508,7 @@ const mapStyle = [
         elementType: 'geometry',
         stylers: [
             {
-                color: '#f5f5f5',
+                color: '#e5e5e5',
             },
             {
                 lightness: 20,
@@ -462,7 +520,7 @@ const mapStyle = [
         elementType: 'geometry.fill',
         stylers: [
             {
-                color: '#ffffff',
+                color: '#ffdb99',
             },
             {
                 lightness: 17,
@@ -474,7 +532,7 @@ const mapStyle = [
         elementType: 'geometry.stroke',
         stylers: [
             {
-                color: '#ffffff',
+                color: '#ffdb99',
             },
             {
                 lightness: 29,
@@ -489,7 +547,7 @@ const mapStyle = [
         elementType: 'geometry',
         stylers: [
             {
-                color: '#ffffff',
+                color: '#cccccc',
             },
             {
                 lightness: 18,
@@ -513,7 +571,7 @@ const mapStyle = [
         elementType: 'geometry',
         stylers: [
             {
-                color: '#f5f5f5',
+                color: '#e5e5e5',
             },
             {
                 lightness: 21,
@@ -525,7 +583,7 @@ const mapStyle = [
         elementType: 'geometry',
         stylers: [
             {
-                color: '#dedede',
+                color: '#99cc99',
             },
             {
                 lightness: 21,
@@ -585,7 +643,7 @@ const mapStyle = [
         elementType: 'geometry.fill',
         stylers: [
             {
-                color: '#fefefe',
+                color: '#4c4c4c',
             },
             {
                 lightness: 20,
@@ -597,7 +655,7 @@ const mapStyle = [
         elementType: 'geometry.stroke',
         stylers: [
             {
-                color: '#fefefe',
+                color: '#4c4c4c',
             },
             {
                 lightness: 17,
