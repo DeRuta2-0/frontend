@@ -9,7 +9,8 @@ import {
     Easing,
     TouchableOpacity
 } from "react-native";
-import MapView, {PROVIDER_GOOGLE} from "react-native-maps";
+import {Marker, PROVIDER_GOOGLE} from "react-native-maps";
+import MapView from "react-native-map-clustering";
 import * as React from "react";
 import {useEffect, useRef, useState} from "react";
 import {image4ioApiKey, image4ioApiSecret, serverIp, usingServer} from "../localProperties";
@@ -179,7 +180,7 @@ export default function MapScreen({navigation, route}) {
     };
 
     const mapMarkers = () => {
-        return pins.map((marker) => <MapView.Marker
+        return pins.map((marker) => <Marker
             key={marker.id}
             coordinate={marker.coordinates}
             title={marker.username}
@@ -187,11 +188,11 @@ export default function MapScreen({navigation, route}) {
         >
             {getMarkerPicture(marker)}
 
-        </MapView.Marker>)
+        </Marker>)
     };
 
     const mapPlaceMarkers = () => {
-        return placePins.map((marker) => <MapView.Marker
+        return placePins.map((marker) => <Marker
             key={marker.id}
             coordinate={marker.coordinates}
             title={marker.name}
@@ -199,7 +200,7 @@ export default function MapScreen({navigation, route}) {
         >
             {getPlaceMarkerPicture(marker)}
 
-        </MapView.Marker>)
+        </Marker>)
     };
 
     const permissionFunction = async () => {
@@ -393,6 +394,11 @@ export default function MapScreen({navigation, route}) {
                 provider={PROVIDER_GOOGLE}
                 style={styles.mapStyle}
                 loadingEnabled={true}
+                initialRegion={{
+                    latitude: 0,
+                    longitude: 0,
+                    latitudeDelta: 0.25,
+                    longitudeDelta: 0.15}}
                 mapType="standard">
                 {mapMarkers()}
                 {mapPlaceMarkers()}

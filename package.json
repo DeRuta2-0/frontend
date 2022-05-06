@@ -23,6 +23,7 @@
     "react-native": "0.64.3",
     "react-native-elements": "^3.4.2",
     "react-native-file-access": "^1.7.1",
+    "react-native-map-clustering": "^3.4.2",
     "react-native-maps": "0.29.4",
     "react-native-vector-icons": "^9.0.0",
     "react-native-web": "0.17.1"
