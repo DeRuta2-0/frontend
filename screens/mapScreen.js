@@ -43,10 +43,6 @@ export default function MapScreen({navigation, route}) {
         console.log('Location: ' + location.coords.latitude + '/' + location.coords.longitude);
         await getContacts(location);
 
-        await getPlaces();
-
-        setLoading(false);
-
         await updateLocation(location.coords);
 
         map.current.animateToRegion({
@@ -118,31 +114,6 @@ export default function MapScreen({navigation, route}) {
                     id: 3,
                     coordinates: {latitude: -34.621257, longitude: -58.3901285},
                     username: 'drojas'
-                }
-            ]);
-        }
-    }
-
-    async function getPlaces() {
-        if (usingServer) {
-            await fetch(
-                'http://'.concat(serverIp).concat(':8080/place/getAll'), {
-                    method: 'get',
-                    mode: 'no-cors'
-                }
-            )
-                .then(res => res.json())
-                .then(data => {
-                    console.log(JSON.stringify(data));
-                    setPlacePins(data);
-                })
-                .catch(console.error)
-        } else {
-            setPlacePins([
-                {
-                    id: 1,
-                    coordinates: {latitude: -34.61549, longitude: -58.38592},
-                    name: 'Roots Backpackers Hostel Test'
                 }
             ]);
         }
@@ -238,7 +209,7 @@ export default function MapScreen({navigation, route}) {
             key={marker.id}
             coordinate={marker.coordinates}
             title={marker.name}
-            onCalloutPress={() => {getPlace(marker.id)}}
+            onCalloutPress={() => {getPlace(marker.id + '-' + marker.repository)}}
         >
             {getPlaceMarkerPicture(marker)}
 
@@ -361,6 +332,83 @@ export default function MapScreen({navigation, route}) {
         );
     };
 
+    function loadNewPlaces2(region) {
+
+    }
+
+    const calcMinLatByOffset = (lng, offset) => {
+        const factValue = lng - offset;
+        if (factValue < -90) {
+            return (90 + offset) * -1;
+        }
+        return factValue;
+    };
+
+    const calcMaxLatByOffset = (lng, offset) => {
+        const factValue = lng + offset;
+        if (90 < factValue) {
+            return (90 - offset) * -1;
+        }
+        return factValue;
+    };
+
+    const calcMinLngByOffset = (lng, offset) => {
+        const factValue = lng - offset;
+        if (factValue < -180) {
+            return (180 + offset) * -1;
+        }
+        return factValue;
+    };
+
+    const calcMaxLngByOffset = (lng, offset) => {
+        const factValue = lng + offset;
+        if (180 < factValue) {
+            return (180 - offset) * -1;
+        }
+        return factValue;
+    };
+
+    async function loadNewPlaces(region) {
+        if (region.latitude !== 0 && region.longitude !== 0) {
+            const latOffset = region.latitudeDelta / 2;
+            const lngD = (region.longitudeDelta < -180) ? 360 + region.longitudeDelta : region.longitudeDelta;
+            const lngOffset = lngD / 2;
+            if (usingServer) {
+                await fetch(
+                    'http://'.concat(serverIp).concat(':8080/place/getByRegion'), {
+                        method: 'post',
+                        mode: 'no-cors',
+                        headers: {
+                            'Accept' : 'application/json',
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            minLng: calcMinLngByOffset(region.longitude, lngOffset), // westLng - min lng
+                            minLat: calcMinLatByOffset(region.latitude, latOffset), // southLat - min lat
+                            maxLng: calcMaxLngByOffset(region.longitude, lngOffset), // eastLng - max lng
+                            maxLat: calcMaxLatByOffset(region.latitude, latOffset),// northLat - max lat
+                        })
+                    }
+                )
+                    .then(res => res.json())
+                    .then(data => {
+                        console.log('New places: ' + data.length);
+                        setPlacePins(data);
+                        setLoading(false);
+                    })
+                    .catch(console.error)
+            } else {
+                setPlacePins([
+                    {
+                        id: 1,
+                        coordinates: {latitude: -34.61549, longitude: -58.38592},
+                        name: 'Roots Backpackers Hostel Test'
+                    }
+                ]);
+            }
+        }
+    };
+
     return (
         <View>
             <Modal
@@ -432,6 +480,8 @@ export default function MapScreen({navigation, route}) {
                 provider={PROVIDER_GOOGLE}
                 style={styles.mapStyle}
                 loadingEnabled={true}
+                onRegionChangeComplete={(region) => loadNewPlaces(region)}
+                minPoints={5}
                 initialRegion={{
                     latitude: 0,
                     longitude: 0,
