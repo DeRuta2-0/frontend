@@ -47,7 +47,7 @@ export default function MapScreen({navigation, route}) {
 
         setLoading(false);
 
-        await updateLocation(location);
+        await updateLocation(location.coords);
 
         map.current.animateToRegion({
             latitude: location.coords.latitude,
@@ -66,8 +66,9 @@ export default function MapScreen({navigation, route}) {
         return await Location.getCurrentPositionAsync({});
     }
 
-    async function updateLocation(location) {
+    async function updateLocation(coords) {
         if (usingServer) {
+            console.log('Location to update: ' + coords.latitude + '/' + coords.longitude);
             await fetch(
                 'http://'.concat(serverIp).concat(':8080/user/updateLocation'), {
                     method: 'post',
@@ -76,9 +77,7 @@ export default function MapScreen({navigation, route}) {
                         'Accept' : 'application/json',
                         'Content-Type': 'application/json'
                     },
-                    body: JSON.stringify({
-                        coordinates: location
-                    })
+                    body: JSON.stringify(coords)
                 }
             )
                 .catch(console.error)
@@ -126,14 +125,45 @@ export default function MapScreen({navigation, route}) {
     async function getPlaces() {
         if (usingServer) {
             await fetch(
-                'http://'.concat(serverIp).concat(':8080/place'), {
+                'http://'.concat(serverIp).concat(':8080/place/getAll'), {
                     method: 'get',
                     mode: 'no-cors'
                 }
             )
                 .then(res => res.json())
                 .then(data => {
+                    console.log(JSON.stringify(data));
                     setPlacePins(data);
+                })
+                .catch(console.error)
+        } else {
+            setPlacePins([
+                {
+                    id: 1,
+                    coordinates: {latitude: -34.61549, longitude: -58.38592},
+                    name: 'Roots Backpackers Hostel Test'
+                }
+            ]);
+        }
+    }
+
+    async function getPlace(place) {
+        if (usingServer) {
+            await fetch(
+                'http://'.concat(serverIp).concat(':8080/place/get/').concat(place), {
+                    method: 'get',
+                    mode: 'no-cors'
+                }
+            )
+                .then(res => res.json())
+                .then(data => {
+                    setSelectedMarker(data);
+                    if (data.pictures.length > 0) {
+                        setImageUri(data.pictures[0].link);
+                    } else {
+                        setImageUri('https://cdn.image4.io/deruta/misc/nopic.png');
+                    }
+                    setModalVisible(true);
                 })
                 .catch(console.error)
         } else {
@@ -165,16 +195,6 @@ export default function MapScreen({navigation, route}) {
             } else {
                 setImageUri('https://cdn.image4.io/deruta/misc/nopic.png');
             }
-        }
-        setSelectedMarker(marker);
-        setModalVisible(true);
-    }
-
-    const setPlaceMarker = (marker) => {
-        if (marker.pictures.length > 0) {
-            setImageUri(marker.pictures[0].link);
-        } else {
-            setImageUri('https://cdn.image4.io/deruta/misc/nopic.png');
         }
         setSelectedMarker(marker);
         setModalVisible(true);
@@ -217,7 +237,7 @@ export default function MapScreen({navigation, route}) {
             key={marker.id}
             coordinate={marker.coordinates}
             title={marker.name}
-            onCalloutPress={() => {setPlaceMarker(marker)}}
+            onCalloutPress={() => {getPlace(marker.id)}}
         >
             {getPlaceMarkerPicture(marker)}
 
