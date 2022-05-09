@@ -97,6 +97,7 @@ export default function MapScreen({navigation, route}) {
                     if (data[0]) {
                         data[0].coordinates = {latitude: location.coords.latitude, longitude: location.coords.longitude};
                     }
+                    console.log(JSON.stringify(data));
                     setPins(data);
                 })
                 .catch(console.error)
@@ -224,7 +225,7 @@ export default function MapScreen({navigation, route}) {
         return pins.map((marker) => <Marker
             key={marker.id}
             coordinate={marker.coordinates}
-            title={marker.username}
+            title={marker.name}
             onCalloutPress={() => {setMarker(marker)}}
         >
             {getMarkerPicture(marker)}
@@ -321,7 +322,7 @@ export default function MapScreen({navigation, route}) {
     };
 
     const showChangePictureButton = (username) => {
-        return loggedUser === username ? <View style={{flex:1, flexDirection: 'column-reverse'}}>
+        return loggedUser === username ? <View style={{flex:2, flexDirection: 'column-reverse'}}>
             <Button
                 buttonStyle={styles.modalButtonStyle}
                 title={"CAMBIAR IMAGEN"}
@@ -396,21 +397,17 @@ export default function MapScreen({navigation, route}) {
                         <View style={{flex:2, paddingTop: 20, alignContent: "center"}}>
                             <Text
                                 style={styles.modalTitle}>
-                                {selectedMarker.username}{selectedMarker.name}
+                                {selectedMarker.name}
                             </Text>
                         </View>
-                        <View style={{flex:1, padding: 20}}>
+                        <View style={{flex:4, padding: 20}}>
                             <Text
                                 style={styles.modalText}>
-                                {selectedMarker.coordinates ? selectedMarker.coordinates.latitude : ''}
-                            </Text>
-                            <Text
-                                style={styles.modalText}>
-                                {selectedMarker.coordinates ? selectedMarker.coordinates.longitude : ''}
+                                {selectedMarker.description ? selectedMarker.description : ''}
                             </Text>
                         </View>
                         {showChangePictureButton(selectedMarker.username)}
-                        <View style={{flex:1, flexDirection: 'column-reverse', paddingBottom: 20}}>
+                        <View style={{flex:2, flexDirection: 'column-reverse', paddingBottom: 20}}>
                             <Button
                                 buttonStyle={styles.modalButtonStyle}
                                 title={"CERRAR"}
@@ -487,7 +484,7 @@ const styles = StyleSheet.create({
         height: Dimensions.get('window').height + 35
     },
     centeredView: {
-        flex: 3,
+        flex: 6,
         flexDirection: 'row',
     },
     modalStyle: {
@@ -504,8 +501,7 @@ const styles = StyleSheet.create({
         textAlign: 'center'
     },
     modalText: {
-        fontSize: 20
-
+        fontSize: 15
     },
     modalButtonStyle: {
         borderRadius: 10
