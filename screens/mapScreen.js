@@ -47,6 +47,8 @@ export default function MapScreen({navigation, route}) {
 
         setLoading(false);
 
+        await updateLocation(location);
+
         map.current.animateToRegion({
             latitude: location.coords.latitude,
             longitude: location.coords.longitude,
@@ -62,6 +64,25 @@ export default function MapScreen({navigation, route}) {
             return;
         }
         return await Location.getCurrentPositionAsync({});
+    }
+
+    async function updateLocation(location) {
+        if (usingServer) {
+            await fetch(
+                'http://'.concat(serverIp).concat(':8080/user/updateLocation'), {
+                    method: 'post',
+                    mode: 'no-cors',
+                    headers: {
+                        'Accept' : 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        coordinates: location
+                    })
+                }
+            )
+                .catch(console.error)
+        }
     }
 
     async function getContacts(location) {
