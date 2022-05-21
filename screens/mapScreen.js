@@ -7,7 +7,7 @@ import {
     Text,
     Animated,
     Easing,
-    TouchableOpacity
+    TouchableOpacity, TextInput
 } from "react-native";
 import {Marker, PROVIDER_GOOGLE} from "react-native-maps";
 import MapView from "react-native-map-clustering";
@@ -19,6 +19,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { encode } from 'js-base64';
 import * as Location from 'expo-location';
 import {ImageGallery} from "@georstat/react-native-image-gallery";
+import Pressable from "react-native/Libraries/Components/Pressable/Pressable";
 
 export default function MapScreen({navigation, route}) {
 
@@ -26,6 +27,7 @@ export default function MapScreen({navigation, route}) {
     const [pins, setPins] = useState([]);
     const [placePins, setPlacePins] = useState([]);
     const [modalVisible, setModalVisible] = useState(false);
+    const [showSearch, setShowSearch] = useState(false);
     const [galleryVisible, setGalleryVisible] = useState(false);
     const [selectedMarker, setSelectedMarker] = useState({});
     const [imageUri, setImageUri] = useState(null);
@@ -33,6 +35,7 @@ export default function MapScreen({navigation, route}) {
     const [galleryPermission, setGalleryPermission] = useState(null);
     const [loading, setLoading] = useState(null);
     const map = useRef(null);
+    const searchRef = useRef(null);
 
     useEffect(async () => {
         setLoading(true);
@@ -44,6 +47,8 @@ export default function MapScreen({navigation, route}) {
         await getContacts(location);
 
         await updateLocation(location.coords);
+
+        setShowSearch(true);
 
         map.current.animateToRegion({
             latitude: location.coords.latitude,
@@ -173,9 +178,25 @@ export default function MapScreen({navigation, route}) {
     }
 
     const getPlaceMarkerPicture = (marker) => {
-        return <Image source={require('../assets/markerHostel.png')}
-                   style={{height: 40, width: 40, borderRadius: 20}}/>;
-
+        if (['Hostel', 'Hotel'] .includes(marker.type.name)) {
+            return <Image source={require('../assets/markerHostel.png')}
+                          style={{height: 40, width: 40, borderRadius: 20}}/>;
+        } if (marker.type.name == 'Restaurant') {
+            return <Image source={require('../assets/markerRestaurant.png')}
+                          style={{height: 40, width: 40, borderRadius: 20}}/>;
+        } if (marker.type.name == 'Tourist Attraction') {
+            return <Image source={require('../assets/markerAttraction.png')}
+                          style={{height: 40, width: 40, borderRadius: 20}}/>;
+        } if (marker.type.name == 'Mechanic and Parts') {
+            return <Image source={require('../assets/markerMechanic.png')}
+                          style={{height: 40, width: 40, borderRadius: 20}}/>;
+        } if (['Wild Camping', 'Informal Campsite', 'Established Campground'] .includes(marker.type.name)) {
+            return <Image source={require('../assets/markerCamping.png')}
+                          style={{height: 40, width: 40, borderRadius: 20}}/>;
+        } else {
+            return <Image source={require('../assets/markerOther.png')}
+                          style={{height: 40, width: 40, borderRadius: 20}}/>;
+        }
     };
 
     const getMarkerPicture = (marker) => {
@@ -213,7 +234,7 @@ export default function MapScreen({navigation, route}) {
         >
             {getPlaceMarkerPicture(marker)}
 
-        </Marker>)
+        </Marker>);
     };
 
     const permissionFunction = async () => {
@@ -332,10 +353,6 @@ export default function MapScreen({navigation, route}) {
         );
     };
 
-    function loadNewPlaces2(region) {
-
-    }
-
     const calcMinLatByOffset = (lng, offset) => {
         const factValue = lng - offset;
         if (factValue < -90) {
@@ -369,6 +386,7 @@ export default function MapScreen({navigation, route}) {
     };
 
     async function loadNewPlaces(region) {
+        if (showSearch) searchRef.current.blur();
         if (region.latitude !== 0 && region.longitude !== 0) {
             const latOffset = region.latitudeDelta / 2;
             const lngD = (region.longitudeDelta < -180) ? 360 + region.longitudeDelta : region.longitudeDelta;
@@ -393,6 +411,7 @@ export default function MapScreen({navigation, route}) {
                     .then(res => res.json())
                     .then(data => {
                         console.log('New places: ' + data.length);
+                        placePins.splice(2, 20);
                         setPlacePins(data);
                         setLoading(false);
                     })
@@ -409,8 +428,23 @@ export default function MapScreen({navigation, route}) {
         }
     };
 
+    const showView = function () {
+        return showSearch ? <View style={[styles.modalSearch]}>
+            <View style={{flex: 8, justifyContent: 'center',}}>
+                <TextInput
+                    ref={searchRef}
+                    style={styles.textContainer}
+                />
+            </View>
+            <View style={{flex: 1, justifyContent: 'center'}}>
+                <Image style={styles.magnifier}
+                       source={require('../assets/magnifier.png')} />
+            </View>
+        </View> : null;
+    }
+
     return (
-        <View>
+        <View style={styles.container}>
             <Modal
                 visible={loading}
                 animationType={"fade"}>
@@ -474,14 +508,15 @@ export default function MapScreen({navigation, route}) {
                 renderHeaderComponent={renderHeaderComponent}
                 renderCustomImage={renderCustomImage}
                 images={mapImages()}/>
+
             <MapView
                 ref={map}
-                customMapStyle={mapStyle}
                 provider={PROVIDER_GOOGLE}
                 style={styles.mapStyle}
                 loadingEnabled={true}
                 onRegionChangeComplete={(region) => loadNewPlaces(region)}
-                minPoints={5}
+                onPress={() => {if (showSearch) searchRef.current.blur()}}
+                tracksViewChanges={false}
                 initialRegion={{
                     latitude: 0,
                     longitude: 0,
@@ -491,6 +526,7 @@ export default function MapScreen({navigation, route}) {
                 {mapMarkers()}
                 {mapPlaceMarkers()}
             </MapView>
+            {showView()}
         </View>
     );
 };
@@ -516,6 +552,12 @@ const spin = spinValue.interpolate({
 });
 
 const styles = StyleSheet.create({
+    container: {
+        ...StyleSheet.absoluteFillObject,
+    },
+    textContainer: {
+        fontSize: 20,
+    },
     loadingView: {
         flex: 1,
         alignItems: 'center',
@@ -530,11 +572,16 @@ const styles = StyleSheet.create({
         fontSize: 35
     },
     mapStyle: {
-        width: Dimensions.get('window').width,
-        height: Dimensions.get('window').height + 35
+        height: '100%',
+        width: '100%',
+        position: 'absolute'
     },
     centeredView: {
         flex: 6,
+        flexDirection: 'row',
+    },
+    centeredSearchView: {
+        height: 40,
         flexDirection: 'row',
     },
     modalStyle: {
@@ -544,6 +591,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         borderWidth: 3,
         borderColor: '#bbb'
+    },
+    modalSearch: {
+        backgroundColor: '#ddd',
+        borderRadius: 10,
+        paddingLeft: 10,
+        borderWidth: 3,
+        borderColor: '#bbb',
+        justifyContent: 'center',
+        flexDirection: 'row',
+        height: 50, position: 'absolute', top: 50, left: 20, right: 20
     },
     modalTitle: {
         fontSize: 30,
@@ -562,6 +619,10 @@ const styles = StyleSheet.create({
         borderRadius: 75,
         borderWidth: 3,
         borderColor: '#35CE8D'
+    },
+    magnifier: {
+        width: 25,
+        height: 25
     },
     closeButton: {
         width: 40,
@@ -582,180 +643,3 @@ const styles = StyleSheet.create({
         transform: [{rotate: spin}]
     }
 });
-
-const mapStyle = [
-    {
-        featureType: 'water',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#7ca9f4',
-            },
-            {
-                lightness: 17,
-            },
-        ],
-    },
-    {
-        featureType: 'landscape',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#e5e5e5',
-            },
-            {
-                lightness: 20,
-            },
-        ],
-    },
-    {
-        featureType: 'road.highway',
-        elementType: 'geometry.fill',
-        stylers: [
-            {
-                color: '#ffdb99',
-            },
-            {
-                lightness: 17,
-            },
-        ],
-    },
-    {
-        featureType: 'road.highway',
-        elementType: 'geometry.stroke',
-        stylers: [
-            {
-                color: '#ffdb99',
-            },
-            {
-                lightness: 29,
-            },
-            {
-                weight: 0.2,
-            },
-        ],
-    },
-    {
-        featureType: 'road.arterial',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#cccccc',
-            },
-            {
-                lightness: 18,
-            },
-        ],
-    },
-    {
-        featureType: 'road.local',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#ffffff',
-            },
-            {
-                lightness: 16,
-            },
-        ],
-    },
-    {
-        featureType: 'poi',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#e5e5e5',
-            },
-            {
-                lightness: 21,
-            },
-        ],
-    },
-    {
-        featureType: 'poi.park',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#99cc99',
-            },
-            {
-                lightness: 21,
-            },
-        ],
-    },
-    {
-        elementType: 'labels.text.stroke',
-        stylers: [
-            {
-                visibility: 'on',
-            },
-            {
-                color: '#ffffff',
-            },
-            {
-                lightness: 16,
-            },
-        ],
-    },
-    {
-        elementType: 'labels.text.fill',
-        stylers: [
-            {
-                saturation: 36,
-            },
-            {
-                color: '#333333',
-            },
-            {
-                lightness: 40,
-            },
-        ],
-    },
-    {
-        elementType: 'labels.icon',
-        stylers: [
-            {
-                visibility: 'off',
-            },
-        ],
-    },
-    {
-        featureType: 'transit',
-        elementType: 'geometry',
-        stylers: [
-            {
-                color: '#f2f2f2',
-            },
-            {
-                lightness: 19,
-            },
-        ],
-    },
-    {
-        featureType: 'administrative',
-        elementType: 'geometry.fill',
-        stylers: [
-            {
-                color: '#4c4c4c',
-            },
-            {
-                lightness: 20,
-            },
-        ],
-    },
-    {
-        featureType: 'administrative',
-        elementType: 'geometry.stroke',
-        stylers: [
-            {
-                color: '#4c4c4c',
-            },
-            {
-                lightness: 17,
-            },
-            {
-                weight: 1.2,
-            },
-        ],
-    },
-];
